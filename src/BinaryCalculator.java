@@ -11,68 +11,74 @@ public class BinaryCalculator
 	if(null == a || null == b || a.size() != b.size()){
 	    throw new IllegalArgumentException("BinaryCalculator.add(a,b): a and b cannot be null and must be the same length.");
 	}
-	int carries = 0;
-	int bitPlacementA = 0;
-	int bitPlacementB = 0;
+
 	BitField result = new BitField(a.size());
-
+	boolean carries = false;
 	for(int i = a.size() - 1; i >= 0; i--) {
-		if (a.get(i)) {
-			bitPlacementA = 1;
-		}
-		if (b.get(i)) {
-			bitPlacementB = 1;
-		}
+		if(a.get(i) && b.get(i)){
+			if(carries){
+				result.set(i, true);
+				carries = true;
+			} else {
+				result.set(i, false);
+				carries = true;
+			}
+		} else if(!a.get(i) && !b.get(i)){
+			if(carries){
+				result.set(i, true);
+				carries = false;
 
-		if((bitPlacementA + bitPlacementB) == 0 && carries == 0){
-			result.set(i, false);
-		} else if((bitPlacementA + bitPlacementB) == 0 && carries == 1){
-			result.set(i, true);
-			carries = 0;
-		} else if((bitPlacementA + bitPlacementB) == 1 && carries == 0){
-			result.set(i, true);
-		} else if((bitPlacementA + bitPlacementB) == 1 && carries == 1){
-			result.set(i, false);
-			carries = 1;
-		} else if((bitPlacementA + bitPlacementB) == 2 && carries == 0){
-			result.set(i, false);
-			carries = 1;
-		} else if((bitPlacementA + bitPlacementB) == 2 && carries == 1){
-			result.set(i, true);
-			carries = 1;
+			} else {
+				result.set(i, false);
+				carries = false;
+			}
+		} else if(a.get(i) || b.get(i)){
+			if(carries){
+				result.set(i, false);
+				carries = true;
+			} else {
+				result.set(i, true);
+				carries = false;
+			}
 		}
-
-//		if ((bitPlacementA + bitPlacementB + carries) == 1) {
-//			result.set(i, true);
-//			carries = 0;
-//		} else if((bitPlacementA + bitPlacementB) == 2){
-//			if(carries == 1){
-//				result.set(i, true);
-//			} else if(carries == 0){
-//				result.set(i, false);
-//			}
-//			carries = 1;
-//		} else if((bitPlacementA + bitPlacementB + carries) == 0) {
-//			result.set(i, false);
-//		}
-
-		//case for overflow
-//		if(carries == 1){
-//			result.set(0, true);
-//		} else {
-//			result.set(1, false);
-//		}
 	}
-	return result;
+	return reverse(result);
     }
 
-    public static BitField subtract(BitField a, BitField b)
+	static BitField reverse(BitField a)
+	{
+		BitField b = new BitField(a.size());
+		int j = a.size();
+		for (int i = 0; i < a.size(); i++) {
+			b.set(j - 1, a.get(i));
+			j--;
+		}
+		return b;
+	}
+	public static BitField subtract(BitField a, BitField b)
     {
 	if(null == a || null == b || a.size() != b.size()){
 	    throw new IllegalArgumentException("BinaryCalculator.add(a,b): a and b cannot be null and must be the same length.");
 	}
-	return new BitField(a.size());
+		BitField negated = negate(b);
+
+		return add(a, negated);
     }
+
+    public static BitField negate(BitField a){
+		BitField c = complement(a);
+		BitField one = new BitField(a.size());
+		one.set(0, true);
+		return add(c, one);
+	}
+	public static BitField complement(BitField a){
+    	BitField dup = new BitField(a.size());
+    	for(int i = 0; i < a.size(); i++){
+    		dup.set(i, !a.get(i));
+		}
+    	return dup;
+	}
+
 
     public static BitField multiply(BitField a, BitField b)
     {
@@ -87,7 +93,6 @@ public class BinaryCalculator
 	if(null == a || null == b || a.size() != b.size()){
 	    throw new IllegalArgumentException("BinaryCalculator.add(a,b): a and b cannot be null and must be the same length.");
 	}
-
 	// Return both the quotient and the remainder
 	BitField[] out = new BitField [ 2 ];
 	out[0] = new BitField(a.size()); // quotient
